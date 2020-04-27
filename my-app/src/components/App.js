@@ -1,4 +1,5 @@
 import React, { Component, PureComponent } from "react";
+import PropTypes from "prop-types";
 
 class App extends Component {
 	state = {
@@ -25,7 +26,15 @@ class App extends Component {
 			},
 		],
 	};
-
+	getHighScore = () => {
+		const scores = this.state.players.map((p) => p.score);
+		const highScore = Math.max(...scores);
+		if (highScore) {
+			return highScore;
+		} else {
+			return null;
+		}
+	};
 	handleRemovePlayer = (id) => {
 		this.setState((prevState) => ({
 			players: prevState.players.filter((player) => player.id !== id),
@@ -55,11 +64,12 @@ class App extends Component {
 	};
 
 	render() {
+		const highScore = this.getHighScore();
 		const players = this.state.players; //initalPlayers array received in props
 		return (
 			<div className="scoreboard">
 				{/* Passing props here to Header */}
-				<Header title="Scoreboard" players={players} />
+				<Header players={players} />
 				{/* Passing player props here to Player using map */}
 				{players.map((player, index) => (
 					<Player
@@ -68,6 +78,7 @@ class App extends Component {
 						score={player.score}
 						id={player.id} //ID to delete player etc
 						index={index}
+						isHighScore={highScore === player.score}
 						handleScore={this.handleScoreChange}
 						removePlayer={this.handleRemovePlayer} //method passed to player props
 					/>
@@ -77,7 +88,6 @@ class App extends Component {
 		);
 	}
 }
-
 const Header = ({ players, title }) => {
 	//You can use dot notation like props.title, props.totalPlayers to access these
 	return (
@@ -87,6 +97,16 @@ const Header = ({ players, title }) => {
 			<Stopwatch />
 		</header>
 	);
+};
+
+Header.propTypes = {
+	players: PropTypes.arrayOf(PropTypes.object),
+	title: PropTypes.string,
+};
+
+Header.defaultProps = {
+	//this default is applied only if the title is empty in the Header or not received in props
+	title: "Scoreboard",
 };
 
 const Stats = ({ players }) => {
@@ -110,28 +130,29 @@ const Stats = ({ players }) => {
 	);
 };
 
+Stats.propTypes = {
+	players: PropTypes.arrayOf(
+		PropTypes.shape({
+			score: PropTypes.number,
+		})
+	),
+};
+
 class AddPlayerForm extends Component {
-	state = {
-		value: "",
-	};
+	playerInput = React.createRef();
 
 	handleSubmit = (e) => {
 		e.preventDefault();
-		this.props.addPlayer(this.state.value);
-		this.setState({ value: "" });
+		this.props.addPlayer(this.playerInput.current.value);
+		e.currentTarget.reset();
 	};
-	handleValueChange = (e) => {
-		this.setState({
-			value: e.target.value,
-		});
-	};
+
 	render() {
 		return (
 			<form onSubmit={this.handleSubmit}>
 				<input
 					type="text"
-					value={this.state.value}
-					onChange={this.handleValueChange}
+					ref={this.playerInput}
 					placeholder="Enter a players Name"
 				/>
 				<input type="submit" value="Add Player" />
@@ -139,8 +160,16 @@ class AddPlayerForm extends Component {
 		);
 	}
 }
-
 class Player extends PureComponent {
+	static propTypes = {
+		name: PropTypes.string.isRequired,
+		score: PropTypes.number,
+		id: PropTypes.number,
+		index: PropTypes.number,
+		handleScore: PropTypes.func,
+		removePlayer: PropTypes.func,
+		isHighScore: PropTypes.bool,
+	};
 	render() {
 		const {
 			name,
@@ -149,6 +178,7 @@ class Player extends PureComponent {
 			index,
 			handleScore,
 			removePlayer,
+			isHighScore,
 		} = this.props;
 		console.log(name);
 
@@ -158,8 +188,9 @@ class Player extends PureComponent {
 					<button
 						onClick={() => removePlayer(id)}
 						className="remove-player">
-						x
+						✖
 					</button>
+					<Icon isHighScore={isHighScore} />
 					{name}
 				</span>
 				{/* Counter props are passed here */}
@@ -172,7 +203,27 @@ class Player extends PureComponent {
 		);
 	}
 }
+const Icon = ({ isHighScore }) => {
+	return (
+		<svg
+			viewBox="0 0 44 35"
+			className={isHighScore ? "is-high-score" : null}>
+			<path
+				d="M26.7616 10.6207L21.8192 0L16.9973 10.5603C15.3699 14.1207 10.9096 15.2672 7.77534 12.9741L0 7.24138L6.56986 28.8448H37.0685L43.5781 7.72414L35.7425 13.0948C32.6685 15.2672 28.3288 14.0603 26.7616 10.6207Z"
+				transform="translate(0 0.301727)"
+			/>
+			<rect
+				width="30.4986"
+				height="3.07759"
+				transform="translate(6.56987 31.5603)"
+			/>
+		</svg>
+	);
+};
 
+Icon.propTypes = {
+	isHighScore: PropTypes.bool,
+};
 const Counter = ({ index, score, handleScore }) => {
 	return (
 		<div className="counter">
@@ -191,6 +242,11 @@ const Counter = ({ index, score, handleScore }) => {
 	);
 };
 
+Counter.propTypes = {
+	index: PropTypes.number,
+	score: PropTypes.number,
+	handlescore: PropTypes.func,
+};
 class Stopwatch extends Component {
 	state = {
 		isRunning: false,
