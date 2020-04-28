@@ -5,22 +5,22 @@ export class Provider extends React.Component {
 	state = {
 		players: [
 			{
-				name: "Nomee",
+				name: "John",
 				score: 0,
 				id: 1,
 			},
 			{
-				name: "Hammad",
+				name: "Mike",
 				score: 0,
 				id: 2,
 			},
 			{
-				name: "Mansoor",
+				name: "Billi",
 				score: 0,
 				id: 3,
 			},
 			{
-				name: "Wahab",
+				name: "Ronnie",
 				score: 0,
 				id: 4,
 			},
